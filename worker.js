@@ -8,17 +8,15 @@ export default {
     };
 
 
-    if (request.method === "OPTIONS") {
-      return new Response(null, {
-        headers: cors
-      });
+    if(request.method==="OPTIONS"){
+      return new Response(null,{headers:cors});
     }
 
 
-    if (request.method === "GET") {
+    if(request.method==="GET"){
       return new Response(
         JSON.stringify({
-          status: "JKBOSE AI Worker Running"
+          status:"JKBOSE Advanced AI Bot Running"
         }),
         {
           headers:{
@@ -30,92 +28,76 @@ export default {
     }
 
 
-    try {
+    try{
+
 
       const body = await request.json();
 
-      const userPrompt = body.prompt || "";
+      const userPrompt = body.prompt || "Hello";
 
 
-      const aiPrompt = `
+      const systemPrompt = `
 
-You are JKBOSE Class 10 AI Education Assistant.
+You are an advanced JKBOSE AI teacher.
 
-Create high quality exam content.
+Create beautiful educational answers.
 
-IMPORTANT RULES:
+Return ONLY HTML.
 
-1. Return ONLY HTML inside one div.
-2. Do not use <html>, <body>, <head>.
-3. Do not use h1 tag.
-4. Use h2 and h3 only.
-5. Create clean mobile friendly tables.
-6. Never create broken tables.
-7. Do not use Markdown.
-8. Do not use ### or ** symbols.
+Rules:
 
-FOR MATHEMATICS:
+1. Never use markdown.
+2. Use proper HTML tags.
+3. Use h2,h3 headings.
+4. Use tables for comparison and questions.
+5. Use LaTeX for mathematics.
 
-Use LaTeX format:
+LaTeX examples:
 
-Correct:
-\\(\\sqrt{50}\\)
+\\(x^2+y^2=z^2\\)
 
-Correct:
-\\(\\frac{5}{3}\\)
+\\(\\frac{a}{b}\\)
 
-Never write raw LaTeX without brackets.
+\\(\\sqrt{x}\\)
 
 
-Output structure:
+For diagrams:
+Use simple SVG or image links if required.
 
-<div class="ai-content">
+Create:
 
-<h2>Topic Title</h2>
-
-<div class="summary">
-Short explanation
-</div>
-
-
-<h3>Important Points</h3>
-
-<ul>
-<li>Point 1</li>
-<li>Point 2</li>
-</ul>
+- Title
+- Explanation
+- Important Points
+- Formula box
+- Tables
+- Examples
+- Exam Questions
+- Summary
 
 
-<h3>Important Questions</h3>
+Table format:
 
 <table>
 <tr>
-<th>No.</th>
+<th>No</th>
 <th>Question</th>
 <th>Marks</th>
 </tr>
 
 <tr>
 <td>1</td>
-<td>Question text</td>
-<td>2</td>
+<td>Question</td>
+<td>5</td>
 </tr>
 
 </table>
 
 
-<h3>Exam Tips</h3>
-
-<ul>
-<li>Tip</li>
-</ul>
+Keep output attractive and mobile friendly.
 
 
-</div>
-
-
-User Request:
-
+User:
 ${userPrompt}
 
 `;
@@ -131,20 +113,18 @@ ${userPrompt}
             "Authorization":`Bearer ${env.VELONA_KEY}`
           },
 
-
           body:JSON.stringify({
 
-            model:"nvidia/nemotron-3-nano-30b-a3b",
+            model:"qwen/qwen3.7-flash",
 
             turns:[
               {
                 role:"user",
-                content:aiPrompt
+                content:systemPrompt
               }
             ]
 
           })
-
         }
       );
 
@@ -152,13 +132,9 @@ ${userPrompt}
       const data = await response.json();
 
 
-      let output = 
-      data?.data?.output || "No response";
-
-
       return new Response(
         JSON.stringify({
-          html: output
+          html:data.data?.output || "No response"
         }),
         {
           headers:{
@@ -169,8 +145,7 @@ ${userPrompt}
       );
 
 
-    }
-    catch(error){
+    }catch(error){
 
       return new Response(
         JSON.stringify({
