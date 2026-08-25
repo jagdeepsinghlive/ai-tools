@@ -1,166 +1,247 @@
 export default {
-  async fetch(request, env) {
 
-    const cors = {
-      "Access-Control-Allow-Origin": "*",
-      "Access-Control-Allow-Methods": "POST, GET, OPTIONS",
-      "Access-Control-Allow-Headers": "Content-Type"
-    };
+async fetch(request, env) {
 
 
-    if(request.method==="OPTIONS"){
-      return new Response(null,{headers:cors});
-    }
+const cors = {
+"Access-Control-Allow-Origin":"*",
+"Access-Control-Allow-Methods":"POST, GET, OPTIONS",
+"Access-Control-Allow-Headers":"Content-Type"
+};
 
 
-    if(request.method==="GET"){
-      return new Response(
-        JSON.stringify({
-          status:"JKBOSE Advanced AI Bot Running"
-        }),
-        {
-          headers:{
-            "Content-Type":"application/json",
-            ...cors
-          }
-        }
-      );
-    }
+// CORS
+
+if(request.method==="OPTIONS"){
+
+return new Response(null,{
+headers:cors
+});
+
+}
 
 
-    try{
+// Test
+
+if(request.method==="GET"){
+
+return new Response(
+JSON.stringify({
+status:"AI Current Affairs Worker Running"
+}),
+{
+headers:{
+"Content-Type":"application/json",
+...cors
+}
+});
+
+}
 
 
-      const body = await request.json();
 
-      const userPrompt = body.prompt || "Hello";
+try{
 
 
-      const systemPrompt = `
+const body = await request.json();
 
-You are an advanced JKBOSE AI teacher.
+const userPrompt = body.prompt || "Generate top current affairs";
 
-Create beautiful educational answers.
 
-Return ONLY HTML.
+
+const prompt = `
+
+You are an expert current affairs assistant.
+
+Generate ONLY Top 10 Current Affairs.
+
+Date:
+${new Date().toDateString()}
+
 
 Rules:
 
-1. Never use markdown.
-2. Use proper HTML tags.
-3. Use h2,h3 headings.
-4. Use tables for comparison and questions.
-5. Use LaTeX for mathematics.
-
-LaTeX examples:
-
-\\(x^2+y^2=z^2\\)
-
-\\(\\frac{a}{b}\\)
-
-\\(\\sqrt{x}\\)
+- Exactly 10 news.
+- Only important exam oriented news.
+- Useful for JKSSB, SSC, UPSC and competitive exams.
+- No introduction.
+- No conclusion.
+- No markdown.
+- Return valid JSON only.
 
 
-For diagrams:
-Use simple SVG or image links if required.
+JSON FORMAT:
 
-Create:
-
-- Title
-- Explanation
-- Important Points
-- Formula box
-- Tables
-- Examples
-- Exam Questions
-- Summary
+[
+{
+"category":"National",
+"title":"News headline",
+"description":"2-3 line explanation"
+}
+]
 
 
-Table format:
+Cover:
 
-<table>
-<tr>
-<th>No</th>
-<th>Question</th>
-<th>Marks</th>
-</tr>
-
-<tr>
-<td>1</td>
-<td>Question</td>
-<td>5</td>
-</tr>
-
-</table>
+1. National
+2. International
+3. Economy
+4. Science & Technology
+5. Government Schemes
+6. Sports
 
 
-Keep output attractive and mobile friendly.
+User Request:
 
-
-User:
 ${userPrompt}
 
 `;
 
 
-      const response = await fetch(
-        "https://velona.in/gateway/v1/inference/run",
-        {
-          method:"POST",
 
-          headers:{
-            "Content-Type":"application/json",
-            "Authorization":`Bearer ${env.VELONA_KEY}`
-          },
+const response = await fetch(
 
-          body:JSON.stringify({
+"https://velona.in/gateway/v1/inference/run",
 
-            model:"qwen/qwen3.7-flash",
+{
 
-            turns:[
-              {
-                role:"user",
-                content:systemPrompt
-              }
-            ]
+method:"POST",
 
-          })
-        }
-      );
+headers:{
+
+"Content-Type":"application/json",
+
+"Authorization":
+`Bearer ${env.VELONA_KEY}`
+
+},
 
 
-      const data = await response.json();
+body:JSON.stringify({
+
+model:"qwen/qwen3.7-flash",
+
+turns:[
+
+{
+
+role:"user",
+
+content:prompt
+
+}
+
+]
+
+})
+
+}
+
+);
 
 
-      return new Response(
-        JSON.stringify({
-          html:data.data?.output || "No response"
-        }),
-        {
-          headers:{
-            "Content-Type":"application/json",
-            ...cors
-          }
-        }
-      );
+
+const data = await response.json();
 
 
-    }catch(error){
 
-      return new Response(
-        JSON.stringify({
-          error:error.message
-        }),
-        {
-          status:500,
-          headers:{
-            "Content-Type":"application/json",
-            ...cors
-          }
-        }
-      );
+let output =
+data?.data?.output || "[]";
 
-    }
 
-  }
+// Clean JSON
+
+output = output
+.replace(/```json/g,"")
+.replace(/```/g,"")
+.trim();
+
+
+
+let json;
+
+
+try{
+
+json = JSON.parse(output);
+
+}
+
+catch(e){
+
+json=[
+{
+category:"AI",
+title:"Response Format Error",
+description:output
+}
+];
+
+}
+
+
+
+return new Response(
+
+JSON.stringify({
+
+status:"success",
+
+articles:json
+
+}),
+
+{
+
+headers:{
+
+"Content-Type":"application/json",
+
+...cors
+
+}
+
+}
+
+);
+
+
+
+}
+
+catch(error){
+
+
+return new Response(
+
+JSON.stringify({
+
+status:"error",
+
+message:error.message
+
+}),
+
+{
+
+status:500,
+
+headers:{
+
+"Content-Type":"application/json",
+
+...cors
+
+}
+
+}
+
+);
+
+
+}
+
+
+}
+
 };
