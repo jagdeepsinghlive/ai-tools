@@ -1,7 +1,6 @@
 export default {
   async fetch(request, env) {
 
-    // Test
     if (request.method === "GET") {
       return new Response(
         JSON.stringify({
@@ -9,38 +8,13 @@ export default {
         }),
         {
           headers: {
-            "Content-Type": "application/json",
-            "Access-Control-Allow-Origin": "*"
+            "Content-Type": "application/json"
           }
         }
       );
     }
 
-
-    // CORS
-    if (request.method === "OPTIONS") {
-      return new Response(null, {
-        headers: {
-          "Access-Control-Allow-Origin": "*",
-          "Access-Control-Allow-Methods": "POST, OPTIONS",
-          "Access-Control-Allow-Headers": "Content-Type"
-        }
-      });
-    }
-
-
     try {
-
-      let body = {};
-
-      try {
-        body = await request.json();
-      } catch {
-        body = {
-          prompt: "Hello, world!"
-        };
-      }
-
 
       const response = await fetch(
         "https://velona.in/gateway/v1/inference/run",
@@ -50,13 +24,12 @@ export default {
             "Content-Type": "application/json",
             "Authorization": `Bearer ${env.VELONA_KEY}`
           },
-
           body: JSON.stringify({
-            model: "nvidia/nemotron-3-super-120b-a12b:free",
+            model: "nvidia/nemotron-3-nano-30b-a3b",
             turns: [
               {
                 role: "user",
-                content: body.prompt || "Hello, world!"
+                content: "Hello, world!"
               }
             ]
           })
@@ -64,18 +37,7 @@ export default {
       );
 
 
-      const raw = await response.text();
-
-      let data;
-
-      try {
-        data = JSON.parse(raw);
-      } catch {
-        data = {
-          error: raw,
-          status: response.status
-        };
-      }
+      const data = await response.json();
 
 
       return new Response(
@@ -98,8 +60,7 @@ export default {
         {
           status: 500,
           headers: {
-            "Content-Type": "application/json",
-            "Access-Control-Allow-Origin": "*"
+            "Content-Type": "application/json"
           }
         }
       );
