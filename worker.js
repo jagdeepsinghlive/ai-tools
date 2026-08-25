@@ -1,22 +1,40 @@
 export default {
   async fetch(request, env) {
 
+    const cors = {
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Methods": "POST, GET, OPTIONS",
+      "Access-Control-Allow-Headers": "Content-Type"
+    };
+
+    if (request.method === "OPTIONS") {
+      return new Response(null, { headers: cors });
+    }
+
+
     if (request.method === "GET") {
       return new Response(
         JSON.stringify({
-          status: "JKBOSE AI Worker Running"
+          status: "API Working"
         }),
         {
           headers: {
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
+            ...cors
           }
         }
       );
     }
 
+
     try {
 
-      const response = await fetch(
+      let body = await request.json();
+
+      let userPrompt = body.prompt || "Hello";
+
+
+      let apiResponse = await fetch(
         "https://velona.in/gateway/v1/inference/run",
         {
           method: "POST",
@@ -29,7 +47,7 @@ export default {
             turns: [
               {
                 role: "user",
-                content: "Hello, world!"
+                content: userPrompt
               }
             ]
           })
@@ -37,21 +55,21 @@ export default {
       );
 
 
-      const data = await response.json();
+      let result = await apiResponse.json();
 
 
       return new Response(
-        JSON.stringify(data),
+        JSON.stringify(result),
         {
           headers: {
             "Content-Type": "application/json",
-            "Access-Control-Allow-Origin": "*"
+            ...cors
           }
         }
       );
 
 
-    } catch (error) {
+    } catch(error) {
 
       return new Response(
         JSON.stringify({
@@ -60,11 +78,13 @@ export default {
         {
           status: 500,
           headers: {
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
+            ...cors
           }
         }
       );
 
     }
+
   }
 };
