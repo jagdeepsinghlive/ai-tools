@@ -7,13 +7,26 @@ export default {
       "Access-Control-Allow-Headers": "Content-Type"
     };
 
+
     if (request.method === "OPTIONS") {
-      return new Response(null,{headers:cors});
+      return new Response(null, {
+        headers: cors
+      });
     }
 
 
     if (request.method === "GET") {
-      return new Response("AI Worker Running");
+      return new Response(
+        JSON.stringify({
+          status: "JKBOSE AI Worker Running"
+        }),
+        {
+          headers:{
+            "Content-Type":"application/json",
+            ...cors
+          }
+        }
+      );
     }
 
 
@@ -21,38 +34,59 @@ export default {
 
       const body = await request.json();
 
-      const prompt = body.prompt || "Create educational content";
+      const userPrompt = body.prompt || "";
 
 
       const aiPrompt = `
-You are a premium education AI assistant.
 
-Create JKBOSE educational content in HTML format only.
+You are JKBOSE Class 10 AI Education Assistant.
 
-STRICT RULES:
-- Return ONLY HTML.
-- Do not use markdown.
-- Do not use ### or **.
-- Never create broken tables.
-- Always create proper <table>, <tr>, <th>, <td>.
-- Keep mobile friendly.
+Create high quality exam content.
 
-HTML structure:
+IMPORTANT RULES:
 
-<div class="ai-result">
+1. Return ONLY HTML inside one div.
+2. Do not use <html>, <body>, <head>.
+3. Do not use h1 tag.
+4. Use h2 and h3 only.
+5. Create clean mobile friendly tables.
+6. Never create broken tables.
+7. Do not use Markdown.
+8. Do not use ### or ** symbols.
 
-<h1>Topic Title</h1>
+FOR MATHEMATICS:
+
+Use LaTeX format:
+
+Correct:
+\\(\\sqrt{50}\\)
+
+Correct:
+\\(\\frac{5}{3}\\)
+
+Never write raw LaTeX without brackets.
+
+
+Output structure:
+
+<div class="ai-content">
+
+<h2>Topic Title</h2>
 
 <div class="summary">
-Short introduction
+Short explanation
 </div>
 
-<h2>Important Points</h2>
+
+<h3>Important Points</h3>
+
 <ul>
-<li>Point</li>
+<li>Point 1</li>
+<li>Point 2</li>
 </ul>
 
-<h2>Important Questions</h2>
+
+<h3>Important Questions</h3>
 
 <table>
 <tr>
@@ -64,20 +98,26 @@ Short introduction
 <tr>
 <td>1</td>
 <td>Question text</td>
-<td>3</td>
+<td>2</td>
 </tr>
 
 </table>
 
-<div class="tips">
-Exam Tips
-</div>
+
+<h3>Exam Tips</h3>
+
+<ul>
+<li>Tip</li>
+</ul>
+
 
 </div>
 
 
 User Request:
-${prompt}
+
+${userPrompt}
+
 `;
 
 
@@ -85,19 +125,26 @@ ${prompt}
         "https://velona.in/gateway/v1/inference/run",
         {
           method:"POST",
+
           headers:{
             "Content-Type":"application/json",
             "Authorization":`Bearer ${env.VELONA_KEY}`
           },
+
+
           body:JSON.stringify({
+
             model:"nvidia/nemotron-3-nano-30b-a3b",
+
             turns:[
               {
                 role:"user",
                 content:aiPrompt
               }
             ]
+
           })
+
         }
       );
 
@@ -105,9 +152,13 @@ ${prompt}
       const data = await response.json();
 
 
+      let output = 
+      data?.data?.output || "No response";
+
+
       return new Response(
         JSON.stringify({
-          html:data.data?.output || "No result"
+          html: output
         }),
         {
           headers:{
@@ -118,7 +169,8 @@ ${prompt}
       );
 
 
-    }catch(error){
+    }
+    catch(error){
 
       return new Response(
         JSON.stringify({
@@ -134,5 +186,6 @@ ${prompt}
       );
 
     }
+
   }
 };
